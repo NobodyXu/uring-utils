@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
     if (is_in_fd_pipe || is_out_fd_pipe)
         exit_status = splice1(&ring, in_fd, 1024);
     else
-        exit_status = splice2(&ring, out_fd, 1024);
+        exit_status = splice2(&ring, in_fd, 1024);
 
     io_uring_queue_exit(&ring);
 
