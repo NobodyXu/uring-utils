@@ -26,13 +26,13 @@ static bool is_pipe(int fd)
 
 static struct io_uring_cqe* io_uring_get_first_cqe(struct io_uring *ring)
 {
-	struct io_uring_cq *cq = &ring->cq;
+    struct io_uring_cq *cq = &ring->cq;
     return &cq->cqes[(*cq->khead) & (*cq->kring_mask)];
 }
 
 static bool io_uring_has_cqe(struct io_uring *ring)
 {
-	struct io_uring_cq *cq = &ring->cq;
+    struct io_uring_cq *cq = &ring->cq;
     return *cq->khead != io_uring_smp_load_acquire(ring->cq.ktail);
 }
 
@@ -44,11 +44,11 @@ static int splice1(struct io_uring *ring, int in_fd, unsigned len)
     for (struct io_uring_sqe *sqe; (sqe = io_uring_get_sqe(ring)); ) {
         io_uring_prep_splice(sqe, in_fd, (loff_t) -1, out_fd, (loff_t) -1, len, 0);
 
-		int ret = io_uring_submit_and_wait(ring, 1);
-		if (ret < 0) {
-			fprintf(stderr, "sqe submit failed: %s\n", strerror(-ret));
-			return ret;
-		}
+        int ret = io_uring_submit_and_wait(ring, 1);
+        if (ret < 0) {
+            fprintf(stderr, "sqe submit failed: %s\n", strerror(-ret));
+            return ret;
+        }
 
         struct io_uring_cqe *cqe = io_uring_get_first_cqe(ring);
         ret = cqe->res;
@@ -93,8 +93,8 @@ int splice2(struct io_uring *ring, int in_fd, unsigned len)
         sqe->flags |= IOSQE_ASYNC;
         sqe->user_data = 1;
 
-		int ret = io_uring_submit_and_wait(ring, in_fd_consumed ? 1 : 2);
-		if (ret < 0) {
+        int ret = io_uring_submit_and_wait(ring, in_fd_consumed ? 1 : 2);
+        if (ret < 0) {
             fprintf(stderr, "sqe submit failed: %s\n", strerror(-ret));
             return ret;
         }
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
     struct io_uring ring;
     int errno_v = io_uring_queue_init(16, &ring, 0);
     if (errno_v != 0) {
-		fprintf(stderr, "io_uring_setup failed: %s\n", strerror(-errno_v));
+        fprintf(stderr, "io_uring_setup failed: %s\n", strerror(-errno_v));
         return 1;
     }
 
