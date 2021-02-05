@@ -1,3 +1,10 @@
+/**
+ * Known bugs in this program:
+ *
+ * Right after `make` is executed on the terminal, subsequent cat that writes its output to the
+ * terminal all fails.
+ */
+
 #define _XOPEN_SOURCE 500 // Fix sigset_t not found error in liburing.h
 #define _GNU_SOURCE // For loff_t
 #include <sys/types.h>
