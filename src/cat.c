@@ -39,10 +39,10 @@ static bool io_uring_has_cqe(struct io_uring *ring)
 /**
  * in_fd or out_fd is a pipe, so use spice directly
  */
-static int spice1(struct io_uring *ring, int in_fd)
+static int spice1(struct io_uring *ring, int in_fd, size_t len)
 {
     for (struct io_uring_sqe *sqe; (sqe = io_uring_get_sqe(ring)); ) {
-        io_uring_prep_splice(sqe, in_fd, (loff_t) -1, out_fd, (loff_t) -1, 1024, 0);
+        io_uring_prep_splice(sqe, in_fd, (loff_t) -1, out_fd, (loff_t) -1, len, 0);
 
 		int ret = io_uring_submit_and_wait(ring, 1);
 		if (ret < 0) {
@@ -68,7 +68,7 @@ static int spice1(struct io_uring *ring, int in_fd)
 /**
  * Neither in_fd nor out_fd is a pipe, so create one and spice.
  */
-int spice2(struct io_uring *ring, int in_fd)
+int spice2(struct io_uring *ring, int in_fd, size_t len)
 {
     int pipefd[2];
     if (pipe(pipefd) < 0) {
@@ -80,7 +80,7 @@ int spice2(struct io_uring *ring, int in_fd)
 
     for (struct io_uring_sqe *sqe; (sqe = io_uring_get_sqe(ring)); ) {
         if (!in_fd_consumed) {
-            io_uring_prep_splice(sqe, in_fd, (loff_t) -1, pipefd[1], (loff_t) -1, 1024, 0);
+            io_uring_prep_splice(sqe, in_fd, (loff_t) -1, pipefd[1], (loff_t) -1, len, 0);
             sqe->flags |= IOSQE_ASYNC;
             sqe->user_data = 0;
 
@@ -89,7 +89,7 @@ int spice2(struct io_uring *ring, int in_fd)
                 break;
         }
 
-        io_uring_prep_splice(sqe, pipefd[0], (loff_t) -1, out_fd, (loff_t) -1, 1024, 0);
+        io_uring_prep_splice(sqe, pipefd[0], (loff_t) -1, out_fd, (loff_t) -1, len, 0);
         sqe->flags |= IOSQE_ASYNC;
         sqe->user_data = 1;
 
@@ -151,9 +151,9 @@ int main(int argc, char* argv[])
     bool is_out_fd_pipe = is_pipe(out_fd);
 
     if (is_in_fd_pipe || is_out_fd_pipe)
-        exit_status = spice1(&ring, in_fd);
+        exit_status = spice1(&ring, in_fd, 1024);
     else
-        exit_status = spice2(&ring, out_fd);
+        exit_status = spice2(&ring, out_fd, 1024);
 
     io_uring_queue_exit(&ring);
 
