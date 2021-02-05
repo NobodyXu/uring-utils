@@ -7,6 +7,7 @@
 
 #define _XOPEN_SOURCE 500 // Fix sigset_t not found error in liburing.h
 #define _GNU_SOURCE // For loff_t
+#define _LARGEFILE64_SOURCE /* For lseek64 */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -21,14 +22,36 @@
 
 static const int out_fd = 1;
 
+static void fstat_checked(int fd, struct stat *statbuf)
+{
+    if (fstat(fd, statbuf) < 0)
+        err(1, "fstat %d failed", fd);
+}
+
 static bool is_pipe(int fd)
 {
     struct stat statbuf;
-
-    if (fstat(fd, &statbuf) < 0)
-        err(1, "fstat %d failed", fd);
+    fstat_checked(fd, &statbuf);
 
     return S_ISFIFO(statbuf.st_mode);
+}
+
+static void remove_flag_append(mode_t st_mode)
+{
+    int flags = fcntl(out_fd, F_GETFL);
+    if (flags < 0)
+        err(1, "fcntl F_GETFL failed");
+
+    if (flags & O_APPEND) {
+        flags &= ~O_APPEND;
+        if (fcntl(out_fd, F_SETFL, flags) < 0)
+            err(1, "fcntl F_SETFL failed");
+
+        if (S_ISREG(st_mode)) {
+            if (lseek64(out_fd, 0, SEEK_END) < 0)
+                err(1, "lseek64 failed");
+        }
+    }
 }
 
 static struct io_uring_cqe* io_uring_get_first_cqe(struct io_uring *ring)
@@ -100,7 +123,7 @@ int splice2(struct io_uring *ring, int in_fd, unsigned len)
         sqe->flags |= IOSQE_ASYNC;
         sqe->user_data = 1;
 
-        int ret = io_uring_submit_and_wait(ring, in_fd_consumed ? 1 : 2);
+        int ret = io_uring_submit_and_wait(ring, 1);
         if (ret < 0) {
             fprintf(stderr, "sqe submit failed: %s\n", strerror(-ret));
             return ret;
@@ -154,8 +177,13 @@ int main(int argc, char* argv[])
 
     int exit_status;
 
+    struct stat statbuf;
+    fstat_checked(out_fd, &statbuf);
+
+    remove_flag_append(statbuf.st_mode);
+
     bool is_in_fd_pipe = is_pipe(in_fd);
-    bool is_out_fd_pipe = is_pipe(out_fd);
+    bool is_out_fd_pipe = S_ISFIFO(statbuf.st_mode);
 
     if (is_in_fd_pipe || is_out_fd_pipe)
         exit_status = splice1(&ring, in_fd, 1024);
