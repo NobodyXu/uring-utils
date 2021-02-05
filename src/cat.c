@@ -184,6 +184,14 @@ int main(int argc, char* argv[])
 
     bool is_in_fd_pipe = is_pipe(in_fd);
     bool is_out_fd_pipe = S_ISFIFO(statbuf.st_mode);
+    
+    /*
+     * known bug:
+     *
+     * Doesn't set term to make bytes available as soon as enter is hit.
+     *
+     * `cat | ./cat` works as expected, but `./cat` doesn't.
+     */
 
     if (is_in_fd_pipe || is_out_fd_pipe)
         exit_status = splice1(&ring, in_fd, 1024);
