@@ -1,10 +1,7 @@
-/**
- * Known bugs in this program:
- *
- * Right after `make` is executed on the terminal, subsequent cat that writes its output to the
- * terminal all fails.
+/*
+ * NOTE thqt this program does not support reading input from character device
  */
-
+    
 #define _XOPEN_SOURCE 500 // Fix sigset_t not found error in liburing.h
 #define _GNU_SOURCE // For loff_t
 #define _LARGEFILE64_SOURCE /* For lseek64 */
@@ -85,6 +82,8 @@ static int splice1(struct io_uring *ring, int in_fd, unsigned len)
         io_uring_cqe_seen(ring, cqe);
 
         if (ret < 0) {
+            if (ret == -EINVAL)
+                return 3;
             fprintf(stderr, "splice on line %d failed: %s\n", __LINE__, strerror(-ret));
             return 1;
         } else if (ret == 0)
@@ -136,6 +135,8 @@ int splice2(struct io_uring *ring, int in_fd, unsigned len)
             io_uring_cqe_seen(ring, cqe);
 
             if (ret < 0) {
+                if (ret == -EINVAL)
+                    return 3;
                 fprintf(stderr, "splice which has data %zu on line %d failed: %s\n",
                         (size_t) data, __LINE__, strerror(-ret));
                 return 1;
@@ -184,19 +185,16 @@ int main(int argc, char* argv[])
 
     bool is_in_fd_pipe = is_pipe(in_fd);
     bool is_out_fd_pipe = S_ISFIFO(statbuf.st_mode);
-    
-    /*
-     * known bug:
-     *
-     * Doesn't set term to make bytes available as soon as enter is hit.
-     *
-     * `cat | ./cat` works as expected, but `./cat` doesn't.
-     */
 
     if (is_in_fd_pipe || is_out_fd_pipe)
         exit_status = splice1(&ring, in_fd, 1024);
     else
         exit_status = splice2(&ring, in_fd, 1024);
+
+    if (exit_status == 3) {
+        fprintf(stderr, "%s does not support splice OP\n", argc == 2 ? argv[1] : "stdin");
+        exit_status = 1;
+    }
 
     io_uring_queue_exit(&ring);
 
