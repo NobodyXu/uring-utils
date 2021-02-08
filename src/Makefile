@@ -27,6 +27,6 @@ uring-utils: $(OBJS)
 	$(CXX) -std=c++17 -c $(CXXFLAGS) $(CFLAGS) -o $@ $<
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) uring-utils
 
 .PHONY: clean all
