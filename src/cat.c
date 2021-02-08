@@ -98,7 +98,7 @@ static int splice1(struct io_uring *ring, int in_fd, unsigned len)
 /**
  * Neither in_fd nor out_fd is a pipe, so create one and splice.
  */
-int splice2(struct io_uring *ring, int in_fd, unsigned len)
+static int splice2(struct io_uring *ring, int in_fd, unsigned len)
 {
     int pipefd[2];
     if (pipe(pipefd) < 0) {
