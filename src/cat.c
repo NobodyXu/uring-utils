@@ -1,10 +1,10 @@
 /*
  * NOTE thqt this program does not support reading input from character device
  */
-    
-#define _XOPEN_SOURCE 500 // Fix sigset_t not found error in liburing.h
-#define _GNU_SOURCE // For loff_t
+
+#define _GNU_SOURCE /* For loff_t */
 #define _LARGEFILE64_SOURCE /* For lseek64 */
+#include "cat.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -14,8 +14,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-
-#include <liburing.h>
 
 static const int out_fd = 1;
 
@@ -159,7 +157,7 @@ int splice2(struct io_uring *ring, int in_fd, unsigned len)
     return 1;
 }
 
-int cat_main(int argc, char* argv[])
+int cat_main(struct io_uring *ring, int argc, char* argv[])
 {
     int in_fd = 0;
 
@@ -167,13 +165,6 @@ int cat_main(int argc, char* argv[])
         in_fd = open(argv[0], O_RDONLY);
         if (in_fd < 0)
             err(1, "failed to open %s", argv[0]);
-    }
-
-    struct io_uring ring;
-    int errno_v = io_uring_queue_init(16, &ring, 0);
-    if (errno_v != 0) {
-        fprintf(stderr, "io_uring_setup failed: %s\n", strerror(-errno_v));
-        return 1;
     }
 
     int exit_status;
@@ -187,16 +178,14 @@ int cat_main(int argc, char* argv[])
     bool is_out_fd_pipe = S_ISFIFO(statbuf.st_mode);
 
     if (is_in_fd_pipe || is_out_fd_pipe)
-        exit_status = splice1(&ring, in_fd, 1024);
+        exit_status = splice1(ring, in_fd, 1024);
     else
-        exit_status = splice2(&ring, in_fd, 1024);
+        exit_status = splice2(ring, in_fd, 1024);
 
     if (exit_status == 3) {
         fprintf(stderr, "%s does not support splice OP\n", argc == 1 ? argv[0] : "stdin");
         exit_status = 1;
     }
-
-    io_uring_queue_exit(&ring);
 
     return exit_status;
 }

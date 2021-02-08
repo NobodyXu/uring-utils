@@ -1,7 +1,10 @@
+/* Include liburing.h first to make sure _XOPEN_SOURCE is set to 500 */
+#include <liburing.h>
+
+#include <stdio.h>
 #include <string.h>
 #include <libgen.h>
 
-#include <stdio.h>
 #include "cat.h"
 
 int help()
@@ -20,10 +23,30 @@ int list()
     return 0;
 }
 
+int initialize_uring_and_call(
+    int (*func)(struct io_uring *ring, int argc, char* argv[]),
+    int argc,
+    char* argv[]
+)
+{
+    struct io_uring ring;
+    int errno_v = io_uring_queue_init(16, &ring, 0);
+    if (errno_v != 0) {
+        fprintf(stderr, "io_uring_setup failed: %s\n", strerror(-errno_v));
+        return 1;
+    }
+
+    int ret = func(&ring, argc, argv);
+
+    io_uring_queue_exit(&ring);
+
+    return ret;
+}
+
 int invoke(const char *function_name, int argc, char* argv[])
 {
     if (strcmp(function_name, "cat") == 0)
-        return cat_main(argc, argv);
+        return initialize_uring_and_call(cat_main, argc, argv);
     else {
         fprintf(stderr, "Unkown function: %s", function_name);
         return 1;
