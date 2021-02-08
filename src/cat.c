@@ -4,7 +4,8 @@
 
 #define _GNU_SOURCE /* For loff_t */
 #define _LARGEFILE64_SOURCE /* For lseek64 */
-#include "cat.h"
+
+#include <liburing.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -14,6 +15,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+
+#include "cat.h"
 
 static const int out_fd = 1;
 
