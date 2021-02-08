@@ -48,7 +48,7 @@ int invoke(const char *function_name, int argc, char* argv[])
     if (strcmp(function_name, "cat") == 0)
         return initialize_uring_and_call(cat_main, argc, argv);
     else {
-        fprintf(stderr, "Unkown function: %s", function_name);
+        fprintf(stderr, "Unkown function: %s\n", function_name);
         return 1;
     }
 }
