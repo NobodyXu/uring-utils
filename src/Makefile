@@ -11,16 +11,20 @@ LIBS := -L /usr/local/lib/ -l:liburing.a
 
 ## Objects to build
 SRCS := $(shell find . -name '*.c' -a ! -wholename './test/*' -a ! -wholename './benchmark/*')
-OBJS := $(SRCS:.c=)
+OBJS := $(SRCS:.c=.o)
 
 ## Build rules
-all: $(OBJS)
+uring-utils: $(OBJS)
+	$(CC) $(LDFLAGS) $(LIBS) $^ -o $@
 
-%: %.c Makefile
-	$(CC) -std=c11 $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $<
+%.o: %.c Makefile
+	$(CC) -std=c11 -c $(CFLAGS) -o $@ $<
 
-%: %.cc Makefile
-	$(CXX) -std=c++17 $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $<
+%.o: %.c %.h Makefile
+	$(CC) -std=c11 -c $(CFLAGS) -o $@ $<
+
+%.o: %.cc %.hpp Makefile
+	$(CXX) -std=c++17 -c $(CXXFLAGS) $(CFLAGS) -o $@ $<
 
 clean:
 	rm -f $(OBJS)

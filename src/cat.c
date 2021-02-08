@@ -159,14 +159,14 @@ int splice2(struct io_uring *ring, int in_fd, unsigned len)
     return 1;
 }
 
-int main(int argc, char* argv[])
+int cat_main(int argc, char* argv[])
 {
     int in_fd = 0;
 
-    if (argc == 2) {
-        in_fd = open(argv[1], O_RDONLY);
+    if (argc == 1) {
+        in_fd = open(argv[0], O_RDONLY);
         if (in_fd < 0)
-            err(1, "failed to open %s", argv[1]);
+            err(1, "failed to open %s", argv[0]);
     }
 
     struct io_uring ring;
@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
         exit_status = splice2(&ring, in_fd, 1024);
 
     if (exit_status == 3) {
-        fprintf(stderr, "%s does not support splice OP\n", argc == 2 ? argv[1] : "stdin");
+        fprintf(stderr, "%s does not support splice OP\n", argc == 1 ? argv[0] : "stdin");
         exit_status = 1;
     }
 
