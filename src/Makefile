@@ -29,4 +29,4 @@ uring-utils: $(OBJS)
 clean:
 	rm -f $(OBJS) uring-utils
 
-.PHONY: clean all
+.PHONY: clean
