@@ -16,10 +16,10 @@ OUTS := $(C_SRCS:.c=.out) $(CXX_SRCS:.cc=.out)
 test: $(OUTS)
 	./run_tests.sh "$(OUTS)"
 
-%.out: %.c Makefile
+%.out: %.c utility.hpp Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 
-%.out: %.cc Makefile
+%.out: %.cc utility.hpp Makefile
 	$(CXX) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $< -o $@
 
 clean:
@@ -28,4 +28,4 @@ clean:
 .PHONY: test clean
 
 ## Dependencies
-test_parser.o: test_parser.cc Makefile ../src/parser.c ../src/parser.h
+test_parser.out: ../src/parser.c ../src/parser.h
