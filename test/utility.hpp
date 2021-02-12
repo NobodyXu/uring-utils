@@ -79,6 +79,22 @@ inline void assert_eq_impl_impl(const str_view (&expected)[N], const str_view (&
     }
 }
 
+template <size_t N>
+inline void assert_eq_impl_impl(const char * const (&expected)[N], const char * const (&actual)[N],
+                                const char *expected_expr, const char *actual_expr,
+                                int line, const char *func, const char *file, const char *msg)
+{
+    for (size_t i = 0; i != N; ++i) {
+        if (expected[i] == actual[i])
+            continue;
+        if ( ((expected[i] == NULL) ^ (actual[i] == NULL)) || (strcmp(expected[i], actual[i]) != 0))
+            errx(1, "%s[%zu] != %s[%zu] on line %d, function %s of file %s failed: %s: "
+                    "expected = %s, actual = %s", 
+                    expected_expr, i, actual_expr, i, line, func, file, msg,
+                    expected[i], actual[i]);
+    }
+}
+
 #define assert_eq_impl(expected, actual, line, file, msg)           \
     assert_eq_impl_impl((expected), (actual), # expected, # actual, \
                         (line), __PRETTY_FUNCTION__, (file), (msg))

@@ -18,7 +18,7 @@ static int str_view_and_str_cmp(const void *key_arg, const void *x_arg)
 
 int parse_dd_like_option(int argc, const char* const argv[],
                          const char * const options[], size_t option_sz,
-                         struct str_view values[])
+                         const char* values[])
 {
     for (int i = 0; i != argc; ++i) {
         const char *arg = argv[i];
@@ -41,10 +41,7 @@ int parse_dd_like_option(int argc, const char* const argv[],
                                 options, option_sz, sizeof(const char*),
                                 str_view_and_str_cmp);
         if (element) {
-            values[(const char * const *) element - options] = (struct str_view){
-                .str = delimiter + 1,
-                .len = strlen(delimiter + 1)
-            };
+            values[(const char * const *) element - options] = delimiter + 1;
         } else {
             fprintf(stderr, "Invalid option \"%s\": %s", arg, "Unknown option name");
             return 0;
