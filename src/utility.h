@@ -19,6 +19,11 @@
 int strtosize(const char *str, const char **endptr, int base, size_t *dest);
 
 /**
+ * @return 1 on success, 0 if overflowed.
+ */
+int checked_multiply(size_t *dest, size_t ratio);
+
+/**
  * Print s to stderr, but unlike puts, no trailing newline is printed.
  */
 void eputs(const char *s);

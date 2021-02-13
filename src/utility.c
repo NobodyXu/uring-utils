@@ -36,6 +36,16 @@ int strtosize(const char *str, const char* *endptr, int base, size_t *dest)
     return 0;
 }
 
+int checked_multiply(size_t *dest, size_t ratio)
+{
+    const size_t val = *dest * ratio;
+    if (val < *dest)
+        return 0;
+
+    *dest = val;
+    return 1;
+}
+
 void eputs(const char *s)
 {
     fputs(s, stderr);
