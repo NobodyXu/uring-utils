@@ -24,6 +24,14 @@ int strtosize(const char *str, const char **endptr, int base, size_t *dest);
 int checked_multiply(size_t *dest, size_t ratio);
 
 /**
+ * @return 1 on success, 0 on failure and prints an err msg to stderr.
+ *
+ * optiontosize will convert str to integer as a 10-based integer or hex if str starts with '0x';
+ * It will then check the remaining bytes for postfixes such as 'c', 'w', 'b', 'kB', etc.
+ */
+int optiontosize(const char *str, size_t *dest, const char *option_name);
+
+/**
  * Print s to stderr, but unlike puts, no trailing newline is printed.
  */
 void eputs(const char *s);

@@ -1,5 +1,5 @@
-#define _POSIX_C_SOURCE 200809L
-#define _GNU_SOURCE
+#define _GNU_SOURCE /* For strerrordesc_np and O_NOFOLLOW */
+#define _XOPEN_SOURCE 500 /* For snprintf */
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -44,6 +44,93 @@ int checked_multiply(size_t *dest, size_t ratio)
 
     *dest = val;
     return 1;
+}
+
+int optiontosize(const char *str, size_t *dest, const char *option_name)
+{
+    const int base = (str[0] == '0' && str[1] == 'x') ? 16 : 10;
+
+    const char *endptr;
+    switch (strtosize(str, &endptr, base, dest)) {
+        case -1:
+            {
+                char buffer[39];
+                snprintf(buffer, sizeof(buffer),
+                         "libc does not support parsing %d-based", base);
+
+                eprintf("Error parsing %s: %s", option_name, buffer);
+                return 0;
+            }
+
+        case -2:
+            eprintf("Error parsing %s: %s",
+                    option_name, "this option does not contain integer");
+            return 0;
+
+        case -3:
+            eprintf("Error parsing %s: %s",
+                    option_name, "the integer specified is out of range");
+            return 0;
+
+        case 0:
+        default:
+            break;
+    }
+
+    if (*endptr == '\0')
+        return 1;
+
+    static const char * const units[] = {
+        "c",
+        "w",
+        "b",
+        "kB",
+        "K",
+        "MB",
+        "M",
+        "xM",
+        "GB",
+        "G",
+        "T",
+        "P",
+        "E",
+        "Z",
+        "Y",
+    };
+    static const size_t unit_cnt = sizeof(units) / sizeof(const char*);
+
+    static const size_t KByte = 1024;
+    static const size_t units_ratio[] = {
+        1,
+        2,
+        512,
+        1000,
+        KByte,
+        1000 * 1000,
+        KByte * KByte,
+        KByte * KByte,
+        1000 * 1000 * 1000,
+        KByte * KByte * KByte,
+        KByte * KByte * KByte * KByte,
+        KByte * KByte * KByte * KByte * KByte,
+        KByte * KByte * KByte * KByte * KByte * KByte,
+        KByte * KByte * KByte * KByte * KByte * KByte * KByte,
+        KByte * KByte * KByte * KByte * KByte * KByte * KByte * KByte,
+    };
+    Static_assert(sizeof(units) / sizeof(const char*) == sizeof(units_ratio) / sizeof(size_t));
+
+    for (size_t i = 0; i != unit_cnt; ++i) {
+        if (strcmp(endptr, units[i]) == 0) {
+            if (!checked_multiply(dest, units_ratio[i])) {
+                eprintf("Error parsing %s: %s", option_name, "multiplcation overflowed");
+                return 0;
+            } else
+                return 1;
+        }
+    }
+
+    eprintf("Error parsing %s: %s", option_name, "unknown postfix");
+    return 0;
 }
 
 void eputs(const char *s)
