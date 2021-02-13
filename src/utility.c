@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -47,6 +48,16 @@ void eprintf(const char *fmt, ...)
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
+}
+
+const char* strerror_mtsafe(int errnum)
+{
+    return strerrordesc_np(errnum);
+}
+
+const char *strerrno()
+{
+    return strerror_mtsafe(errno);
 }
 
 int open_autorestart(const char *filename, int flags, mode_t mode)
@@ -100,7 +111,7 @@ int openfile(const char *filename, int flags)
     if (fd == -1) {
         eprintf("Failed to %s %s using flags ", "open", filename);
         print_flags(flags);
-        eprintf(" : %s\n", strerror(errno));
+        eprintf(" : %s\n", strerrno());
     }
 
     return fd;
@@ -120,7 +131,7 @@ int createfile(const char *filename, int flags, mode_t mode)
         if (mode & S_ISGID)
             eputs(" with mode S_ISGID");
 
-        eprintf(" : %s\n", strerror(errno));
+        eprintf(" : %s\n", strerrno());
     }
 
     return fd;
