@@ -19,6 +19,13 @@
 int strtosize(const char *str, const char **endptr, int base, size_t *dest);
 
 /**
+ * Print s to stderr, but unlike puts, no trailing newline is printed.
+ */
+void eputs(const char *s);
+
+void eprintf(const char *fmt, ...);
+
+/**
  * @param filename the file must exist, or this function will fail.
  * @param flags can be either O_RDONLY, O_WRONLY or O_RDWR and or-ed with any one of the following:
  *               - O_TRUNC
